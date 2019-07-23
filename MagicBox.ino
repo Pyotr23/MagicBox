@@ -5,7 +5,7 @@ const unsigned int delayInMs = 50;
 const unsigned int frequencyGz = 15000;
 const unsigned int preCodeTime = 3000;
 const unsigned int preCodeTolerancePercent = 20;
-const unsigned int melodyDurationInSec = 20;
+const unsigned int melodyDurationInMs = 10000;
 
 int firstDuration;
 int downThreshold;
@@ -18,7 +18,7 @@ bool preCode = false;
 bool writeMelody = false;
 
 int writingMelodyCounter; 
-int melodyDurationInCount;
+int melodyDurationInCount = -1;
 int preCodeCounter = 1;
 
 void setup() {  
@@ -27,7 +27,7 @@ void setup() {
   pinMode(buttonPin, INPUT);
   pinMode(piezoPin, OUTPUT);
 
-  melodyDurationInCount = melodyDurationInSec * 1000 / delayInMs;
+  melodyDurationInCount = melodyDurationInMs / delayInMs;
   downThreshold = preCodeTime - preCodeTime / 100 * preCodeTolerancePercent;
   upThreshold = preCodeTime + preCodeTime / 100 * preCodeTolerancePercent;
 }
@@ -58,14 +58,20 @@ void loop() {
           if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
               Serial.println("Открыто!");
               writeMelody = true;
-              melodyDurationInCount = 0;
+              melodyDurationInCount = -1;
           }
-          Serial.println(); 
+          Serial.println();           
       }      
       preCodeCounter = 0;
       preCode = false;
       prevClick = false;
   }      
-  delay(delayInMs);
-  if (melodyDurationInCount <= )
+  if (writeMelody){
+    melodyDurationInCount++;
+    if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
+      Serial.println("Запись мелодии окончена.");
+      writeMelody = false;
+    }
+  }
+  delay(delayInMs);  
 }
