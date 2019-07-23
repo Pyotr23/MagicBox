@@ -36,13 +36,13 @@ void loop() {
   clicking = digitalRead(buttonPin);
   digitalWrite(LED_BUILTIN, clicking);
   
-  if (clicking){
+  if (clicking){                            // если есть нажатие, то обрабатываем его
     tone(piezoPin, frequencyGz); 
-    if (!preCode){ 
+    if (!preCode){                          
        preCode = true;       
     }
-    else{
-        if (prevClick){          
+    else{                                   // начинается обработка длинного первого нажатия
+        if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
             preCodeCounter++;
             if ((preCodeCounter * delayInMs) % 1000 == 0)
                 Serial.println("Секундa"); 
@@ -52,7 +52,7 @@ void loop() {
   }  
   else{
       noTone(piezoPin); 
-      if (preCode){      
+    if (preCode){                           // если первое нажатие закончено, то обсчитываем его
           firstDuration = preCodeCounter * delayInMs;
           Serial.println(firstDuration);
           if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
