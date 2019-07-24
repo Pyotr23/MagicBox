@@ -38,40 +38,47 @@ void loop() {
   
     if (clicking){                            // если есть нажатие, то обрабатываем его
         tone(piezoPin, frequencyGz); 
-      
-        if (!preCode)                          
-            preCode = true;      
-        else{                                   // начинается обработка длинного первого нажатия
-            if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
-                preCodeCounter++;
-                if ((preCodeCounter * delayInMs) % 1000 == 0)
-                    Serial.println("Секундa"); 
-            }
-        }    
-        prevClick = true;
+
+        if (writeMelody){
+            
+        }
+        else{
+            if (!preCode)                          
+                preCode = true;      
+            else{                                   // начинается обработка длинного первого нажатия
+                if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
+                    preCodeCounter++;
+                    if ((preCodeCounter * delayInMs) % 1000 == 0)
+                        Serial.println("Секундa"); 
+                }
+            }    
+            prevClick = true;
+        }        
     }  
     else{
         noTone(piezoPin); 
-        if (preCode){                           // если первое нажатие закончено, то обсчитываем его
-            firstDuration = preCodeCounter * delayInMs;
-            Serial.println(firstDuration);
-            if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
-                Serial.println("Открыто!");
-                writeMelody = true;
-                melodyDurationInCount = -1;
-            }
-            Serial.println();           
-        }      
-        preCodeCounter = 0;
-        preCode = false;
-        prevClick = false;
-    }      
-    if (writeMelody){
-        melodyDurationInCount++;
-        if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
-            Serial.println("Запись мелодии окончена.");
+        if (writeMelody){
+            melodyDurationInCount++;
+            if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
+                Serial.println("Запись мелодии окончена.");
             writeMelody = false;
+            }
         }
-    }
+        else{
+            if (preCode){                           // если первое нажатие закончено, то обсчитываем его
+                firstDuration = preCodeCounter * delayInMs;
+                Serial.println(firstDuration);
+                if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
+                    Serial.println("Открыто!");
+                    writeMelody = true;
+                    melodyDurationInCount = 0;
+                }
+                Serial.println();           
+                }      
+            preCodeCounter = 0;
+            preCode = false;
+            prevClick = false;
+        }        
+    }       
     delay(delayInMs);  
 }
