@@ -1,25 +1,25 @@
 
-const byte piezoPin = 3;
-const byte buttonPin = 12;
-const unsigned int delayInMs = 50;
-const unsigned int frequencyGz = 15000;
-const unsigned int preCodeTime = 3000;
-const unsigned int preCodeTolerancePercent = 20;
-const unsigned int melodyDurationInMs = 10000;
+const byte piezoPin = 3;                        // пин пищалки
+const byte buttonPin = 12;                      // пин кнопки
+const unsigned int delayInMs = 50;              // задержка между итерациями основного цикла
+const unsigned int frequencyGz = 15000;         // частота звучания пищалки
+const unsigned int preCodeTime = 3000;          // длительность нажатия кнопки в мс для включения режима записи мелодии
+const unsigned int preCodeTolerancePercent = 20;// точность длительности нажатия кнопки для включения режима записи
+const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
 
-int firstDuration;
-int downThreshold;
-int upThreshold;
-unsigned int counter = 0;
+int firstDuration;        // длительность нажатия для включения режима записи в мс
+int downThreshold;        // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
+int upThreshold;          // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
+unsigned int counter = 0; // счётчик длительности паузы/нажатия
 
-bool clicking = false;
-bool prevClick = false;
-bool preCode = false;
-bool writeMelody = false;
+bool clicking = false;    // есть ли нажатие на данной итерации
+bool prevClick = false;   // было ли нажатие на предыдущей итерации
+bool preCode = false;     // старт вычисления первого нажатия
+bool writeMelody = false; // идёт ли запись мелодии
 
-int writingMelodyCounter; 
-int melodyDurationInCount = -1;
-int preCodeCounter = 1;
+// int writingMelodyCounter;       // счётчик количества итераций записи мелодии
+int melodyDurationInCount = -1; // счётчик количества итераций записи мелодии
+int preCodeCounter = 1;         // счётчик количества итераций нажатия для включения режима записи
 
 void setup() {  
   Serial.begin(9600);
@@ -27,7 +27,7 @@ void setup() {
   pinMode(buttonPin, INPUT);
   pinMode(piezoPin, OUTPUT);
 
-  melodyDurationInCount = melodyDurationInMs / delayInMs;
+//  melodyDurationInCount = melodyDurationInMs / delayInMs;                       
   downThreshold = preCodeTime - preCodeTime / 100 * preCodeTolerancePercent;
   upThreshold = preCodeTime + preCodeTime / 100 * preCodeTolerancePercent;
 }
