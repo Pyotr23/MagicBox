@@ -32,6 +32,7 @@ void setup() {
 //  melodyDurationInCount = melodyDurationInMs / delayInMs;                       
   downThreshold = preCodeTime - preCodeTime / 100 * preCodeTolerancePercent;
   upThreshold = preCodeTime + preCodeTime / 100 * preCodeTolerancePercent;
+  PrintArray(durations);
 }
 
 void loop() {     
@@ -51,6 +52,7 @@ void loop() {
             melodyDurationInCount++;
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
                 Serial.println("Запись мелодии окончена.");
+                PrintArray(durations);
                 durations[currentDuration] = counter;
                 currentDuration = 0;
                 counter = -1;
@@ -81,6 +83,7 @@ void loop() {
             melodyDurationInCount++;
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
                 Serial.println("Запись мелодии окончена.");
+                PrintArray(durations);
                 durations[currentDuration] = counter;
                 currentDuration = 0;
                 counter = -1;
@@ -105,4 +108,13 @@ void loop() {
 
     prevClick = clicking;
     delay(delayInMs);  
+}
+
+void PrintArray(byte arr[50]){
+    Serial.println();
+    for (int i = 0; i < 50; i++){
+        Serial.print(arr[i]) ;
+        Serial.print(" "); 
+    }  
+    Serial.println();
 }
