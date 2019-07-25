@@ -1,18 +1,19 @@
 
 const byte piezoPin = 3;                        // пин пищалки
 const byte buttonPin = 12;                      // пин кнопки
-const unsigned int delayInMs = 50;              // задержка между итерациями основного цикла
+const byte delayInMs = 50;                      // задержка между итерациями основного цикла
 const unsigned int frequencyGz = 15000;         // частота звучания пищалки
 const unsigned int preCodeTime = 3000;          // длительность нажатия кнопки в мс для включения режима записи мелодии
 const unsigned int preCodeTolerancePercent = 20;// точность длительности нажатия кнопки для включения режима записи
 const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
+const byte durationsQuantity = 50;              // наибольшее число пауз и нажатий в мелодии
 
-int firstDuration;          // длительность нажатия для включения режима записи в мс
-int downThreshold;          // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
-int upThreshold;            // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
-int counter = -1;            // счётчик длительности паузы/нажатия
-byte durations[50];         // массив длительностей нажатий/пауз мелодии
-byte currentDuration = 0;   // индекс текущей длительности в массиве длительностей
+int firstDuration;                  // длительность нажатия для включения режима записи в мс
+int downThreshold;                  // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
+int upThreshold;                    // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
+int counter = -1;                   // счётчик длительности паузы/нажатия
+byte durations[durationsQuantity];  // массив длительностей нажатий/пауз мелодии
+byte currentDuration = 0;           // индекс текущей длительности в массиве длительностей
 
 bool clicking = false;    // есть ли нажатие на данной итерации
 bool prevClick = false;   // было ли нажатие на предыдущей итерации
@@ -55,6 +56,7 @@ void loop() {
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
                 Serial.println("Запись мелодии окончена.");
                 PrintArray(durations);
+                ReplayMelody(durations, delayInMs);
                 durations[currentDuration] = counter;
                 currentDuration = 0;
                 counter = -1;
@@ -91,6 +93,7 @@ void loop() {
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
                 Serial.println("Запись мелодии окончена.");
                 PrintArray(durations);
+                ReplayMelody(durations, delayInMs);
                 durations[currentDuration] = counter;
                 currentDuration = 0;
                 counter = -1;
@@ -117,11 +120,29 @@ void loop() {
     delay(delayInMs);  
 }
 
-void PrintArray(byte arr[50]){
+void PrintArray(byte arr[durationsQuantity]){
     Serial.println();
     for (int i = 0; i < 50; i++){
         Serial.print(arr[i]) ;
         Serial.print(" "); 
     }  
     Serial.println();
+}
+
+void ReplayMelody(byte arr[durationsQuantity], byte delayMs){
+    bool clickButton = true;
+    int j = 0;
+    for (int i = 0; i < 50; i++){
+        if (arr[i] == 0)
+            return;
+        if (clickButton){
+            tone(piezoPin, frequencyGz);
+            while (j < arr[i]){
+                delay(delayMs);
+                j++;
+            }
+            clickButton = !clickButton;
+            j = 0;
+        }        
+    }   
 }
