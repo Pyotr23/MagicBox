@@ -10,7 +10,7 @@ const unsigned int melodyDurationInMs = 10000;  // время записи ме�
 int firstDuration;          // длительность нажатия для включения режима записи в мс
 int downThreshold;          // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int upThreshold;            // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
-byte counter = -1;          // счётчик длительности паузы/нажатия
+int counter = -1;            // счётчик длительности паузы/нажатия
 byte durations[50];         // массив длительностей нажатий/пауз мелодии
 byte currentDuration = 0;   // индекс текущей длительности в массиве длительностей
 
@@ -44,8 +44,10 @@ void loop() {
 
         if (writeMelody){
             counter++;
-            if ((counter != 0) || !prevClick){
+            if ((counter != 0) && !prevClick){
                 durations[currentDuration] = counter;
+                Serial.print("В массив записано нажатие длительностью ");
+                Serial.println(counter);
                 currentDuration++;
                 counter = 0;
             }
@@ -73,13 +75,18 @@ void loop() {
     }  
     else{
         noTone(piezoPin); 
-        if (writeMelody){
-            counter++;
-            if ((counter != 0) || prevClick){
-                durations[currentDuration] = counter;
-                currentDuration++;
-                counter = 0;
-            }            
+        if (writeMelody){            
+            if (counter != -1){
+                counter++;
+                if (prevClick){
+                    durations[currentDuration] = counter;
+                    Serial.print("В массив записана пауза длительностью ");
+                    Serial.println(counter);
+                    currentDuration++;
+                    counter = 0;
+                }            
+            }               
+            
             melodyDurationInCount++;
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
                 Serial.println("Запись мелодии окончена.");
@@ -95,7 +102,7 @@ void loop() {
                 firstDuration = preCodeCounter * delayInMs;
                 Serial.println(firstDuration);
                 if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
-                    Serial.println("Открыто!");
+                    Serial.println("Пошла запись мелодии!");
                     writeMelody = true;
                     melodyDurationInCount = 0;
                 }
