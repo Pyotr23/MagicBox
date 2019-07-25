@@ -7,10 +7,12 @@ const unsigned int preCodeTime = 3000;          // длительность на
 const unsigned int preCodeTolerancePercent = 20;// точность длительности нажатия кнопки для включения режима записи
 const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
 
-int firstDuration;        // длительность нажатия для включения режима записи в мс
-int downThreshold;        // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
-int upThreshold;          // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
-unsigned int counter = 0; // счётчик длительности паузы/нажатия
+int firstDuration;          // длительность нажатия для включения режима записи в мс
+int downThreshold;          // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
+int upThreshold;            // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
+byte counter = -1;          // счётчик длительности паузы/нажатия
+byte durations[50];         // массив длительностей нажатий/пауз мелодии
+byte currentDuration = 0;   // индекс текущей длительности в массиве длительностей
 
 bool clicking = false;    // есть ли нажатие на данной итерации
 bool prevClick = false;   // было ли нажатие на предыдущей итерации
@@ -40,7 +42,20 @@ void loop() {
         tone(piezoPin, frequencyGz); 
 
         if (writeMelody){
-            
+            counter++;
+            if ((counter != 0) || !prevClick){
+                durations[currentDuration] = counter;
+                currentDuration++;
+                counter = 0;
+            }
+            melodyDurationInCount++;
+            if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
+                Serial.println("Запись мелодии окончена.");
+                durations[currentDuration] = counter;
+                currentDuration = 0;
+                counter = -1;
+                writeMelody = false;
+            }                            
         }
         else{
             if (!preCode)                          
@@ -51,16 +66,24 @@ void loop() {
                     if ((preCodeCounter * delayInMs) % 1000 == 0)
                         Serial.println("Секундa"); 
                 }
-            }    
-            prevClick = true;
+            }                
         }        
     }  
     else{
         noTone(piezoPin); 
         if (writeMelody){
+            counter++;
+            if ((counter != 0) || prevClick){
+                durations[currentDuration] = counter;
+                currentDuration++;
+                counter = 0;
+            }            
             melodyDurationInCount++;
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
                 Serial.println("Запись мелодии окончена.");
+                durations[currentDuration] = counter;
+                currentDuration = 0;
+                counter = -1;
             writeMelody = false;
             }
         }
@@ -76,9 +99,10 @@ void loop() {
                 Serial.println();           
                 }      
             preCodeCounter = 0;
-            preCode = false;
-            prevClick = false;
+            preCode = false;            
         }        
-    }       
+    }
+
+    prevClick = clicking;
     delay(delayInMs);  
 }
