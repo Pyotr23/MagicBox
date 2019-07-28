@@ -44,10 +44,11 @@ void loop() {
         tone(piezoPin, frequencyGz); 
 
         if (writeMelody){
+            Serial.println(counter);
             counter++;
             if ((counter != 0) && !prevClick){
                 durations[currentDuration] = counter;
-                Serial.print("В массив записано нажатие длительностью ");
+                Serial.print("В массив записана пауза длительностью ");
                 Serial.println(counter);
                 currentDuration++;
                 counter = 0;
@@ -77,12 +78,13 @@ void loop() {
     }  
     else{
         noTone(piezoPin); 
-        if (writeMelody){            
+        if (writeMelody){  
+            Serial.println(counter);          
             if (counter != -1){
                 counter++;
                 if (prevClick){
                     durations[currentDuration] = counter;
-                    Serial.print("В массив записана пауза длительностью ");
+                    Serial.print("В массив записана нажатие длительностью ");
                     Serial.println(counter);
                     currentDuration++;
                     counter = 0;
