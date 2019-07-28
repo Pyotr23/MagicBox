@@ -137,14 +137,15 @@ void ReplayMelody(byte arr[durationsQuantity], byte delayMs){
     for (int i = 0; i < 50; i++){
         if (arr[i] == 0)
             return;
-        if (clickButton){
+        if (clickButton)
             tone(piezoPin, frequencyGz);
-            while (j < arr[i]){
-                delay(delayMs);
-                j++;
-            }
-            clickButton = !clickButton;
-            j = 0;
-        }        
+        else
+            noTone(piezoPin);
+        while (j < arr[i]){
+            delay(delayMs);
+            j++;
+        }
+        clickButton = !clickButton;
+        j = 0;                
     }   
 }
