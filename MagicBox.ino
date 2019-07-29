@@ -13,12 +13,14 @@ int downThreshold;                  // верхняя граница допус�
 int upThreshold;                    // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int counter = -1;                   // счётчик длительности паузы/нажатия
 byte durations[durationsQuantity];  // массив длительностей нажатий/пауз мелодии
+byte notes[durationsQuantity];      // воспроизведённая мелодия
 byte currentDuration = 0;           // индекс текущей длительности в массиве длительностей
 
 bool clicking = false;    // есть ли нажатие на данной итерации
 bool prevClick = false;   // было ли нажатие на предыдущей итерации
 bool preCode = false;     // старт вычисления первого нажатия
 bool writeMelody = false; // идёт ли запись мелодии
+bool listenMelody = false;// идёт ли прослушивание мелодии
 
 // int writingMelodyCounter;       // счётчик количества итераций записи мелодии
 int melodyDurationInCount = -1; // счётчик количества итераций записи мелодии
@@ -47,7 +49,10 @@ void loop() {
             Serial.println(counter);
             counter++;
             if ((counter != 0) && !prevClick){
-                durations[currentDuration] = counter;
+                if (listenMelody)
+                    notes[currentDuration] = counter;
+                else
+                    durations[currentDuration] = counter;
                 Serial.print("В массив записана пауза длительностью ");
                 Serial.println(counter);
                 currentDuration++;
@@ -55,13 +60,21 @@ void loop() {
             }
             melodyDurationInCount++;
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
-                Serial.println("Запись мелодии окончена.");
-                PrintArray(durations);
-                ReplayMelody(durations, delayInMs);
-                durations[currentDuration] = counter;
+                if (listenMelody){
+                    Serial.println("Прослушивание окончено.");
+                    PrintArray(notes);
+                    ReplayMelody(notes, delayInMs);
+                }
+                else {
+                    Serial.println("Запись мелодии окончена.");
+                    PrintArray(durations);
+                    ReplayMelody(durations, delayInMs);
+                }                
+                // durations[currentDuration] = counter;
                 currentDuration = 0;
                 counter = -1;
                 writeMelody = false;
+                listenMelody = false;
             }                            
         }
         else{
@@ -83,7 +96,10 @@ void loop() {
             if (counter != -1){
                 counter++;
                 if (prevClick){
-                    durations[currentDuration] = counter;
+                    if (listenMelody)
+                        notes[currentDuration] = counter;
+                    else
+                        durations[currentDuration] = counter;
                     Serial.print("В массив записана нажатие длительностью ");
                     Serial.println(counter);
                     currentDuration++;
@@ -93,26 +109,40 @@ void loop() {
             
             melodyDurationInCount++;
             if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
-                Serial.println("Запись мелодии окончена.");
-                PrintArray(durations);
-                ReplayMelody(durations, delayInMs);
-                durations[currentDuration] = counter;
+                if (listenMelody){
+                    Serial.println("Прослушивание окончено.");
+                    PrintArray(notes);
+                    ReplayMelody(notes, delayInMs);
+                }
+                else {
+                    Serial.println("Запись мелодии окончена.");
+                    PrintArray(durations);
+                    ReplayMelody(durations, delayInMs);
+                }                
+                // durations[currentDuration] = counter;
                 currentDuration = 0;
                 counter = -1;
-            writeMelody = false;
+                writeMelody = false;
+                listenMelody = false;
             }
         }
         else{
             if (preCode){                           // если первое нажатие закончено, то обсчитываем его
                 firstDuration = preCodeCounter * delayInMs;
                 Serial.println(firstDuration);
+                writeMelody = true;
+                melodyDurationInCount = 0;
                 if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
-                    Serial.println("Пошла запись мелодии!");
-                    writeMelody = true;
-                    melodyDurationInCount = 0;
+                    Serial.println("Пошла запись мелодии!");                    
+                }
+                else{
+                    Serial.println("Пошло слушание мелодии.");  
+                    listenMelody = true;
+                    notes[0] = preCodeCounter;
+                    counter = 0;
                 }
                 Serial.println();           
-                }      
+            }      
             preCodeCounter = 0;
             preCode = false;            
         }        
