@@ -8,7 +8,7 @@ const unsigned int preCodeTolerancePercent = 20;// точность длител
 const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
 const byte durationsQuantity = 50;              // наибольшее число пауз и нажатий в мелодии
 
-int firstDuration;                  // длительность нажатия для включения режима записи в мс
+// int firstDuration;                  // длительность нажатия для включения режима записи в мс
 int downThreshold;                  // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int upThreshold;                    // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int counter = -1;                   // счётчик длительности паузы/нажатия
@@ -22,7 +22,6 @@ bool preCode = false;     // старт вычисления первого на
 bool writeMelody = false; // идёт ли запись мелодии
 bool listenMelody = false;// идёт ли прослушивание мелодии
 
-// int writingMelodyCounter;       // счётчик количества итераций записи мелодии
 int melodyDurationInCount = -1; // счётчик количества итераций записи мелодии
 int preCodeCounter = 1;         // счётчик количества итераций нажатия для включения режима записи
 
@@ -31,10 +30,9 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(buttonPin, INPUT);
   pinMode(piezoPin, OUTPUT);
-
-//  melodyDurationInCount = melodyDurationInMs / delayInMs;                       
-  downThreshold = preCodeTime - preCodeTime / 100 * preCodeTolerancePercent;
-  upThreshold = preCodeTime + preCodeTime / 100 * preCodeTolerancePercent;
+                     
+  downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
+  upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
   PrintArray(durations);
 }
 
@@ -45,7 +43,7 @@ void loop() {
     if (clicking){                            // если есть нажатие, то обрабатываем его
         tone(piezoPin, frequencyGz); 
 
-        if (writeMelody){
+        if (writeMelody){            
             Serial.println(counter);
             counter++;
             if ((counter != 0) && !prevClick){
@@ -69,8 +67,7 @@ void loop() {
                     Serial.println("Запись мелодии окончена.");
                     PrintArray(durations);
                     ReplayMelody(durations, delayInMs);
-                }                
-                // durations[currentDuration] = counter;
+                }                  
                 currentDuration = 0;
                 counter = -1;
                 writeMelody = false;
@@ -91,7 +88,7 @@ void loop() {
     }  
     else{
         noTone(piezoPin); 
-        if (writeMelody){  
+        if (writeMelody){              
             Serial.println(counter);          
             if (counter != -1){
                 counter++;
@@ -100,7 +97,7 @@ void loop() {
                         notes[currentDuration] = counter;
                     else
                         durations[currentDuration] = counter;
-                    Serial.print("В массив записана нажатие длительностью ");
+                    Serial.print("В массив записано нажатие длительностью ");
                     Serial.println(counter);
                     currentDuration++;
                     counter = 0;
@@ -118,8 +115,7 @@ void loop() {
                     Serial.println("Запись мелодии окончена.");
                     PrintArray(durations);
                     ReplayMelody(durations, delayInMs);
-                }                
-                // durations[currentDuration] = counter;
+                }                      
                 currentDuration = 0;
                 counter = -1;
                 writeMelody = false;
@@ -127,18 +123,21 @@ void loop() {
             }
         }
         else{
-            if (preCode){                           // если первое нажатие закончено, то обсчитываем его
-                firstDuration = preCodeCounter * delayInMs;
-                Serial.println(firstDuration);
+            if (preCode){                           // если первое нажатие закончено, то обсчитываем его                
+                Serial.println(preCodeCounter * delayInMs);
                 writeMelody = true;
                 melodyDurationInCount = 0;
-                if ((firstDuration >= downThreshold) && (firstDuration <= upThreshold)){
-                    Serial.println("Пошла запись мелодии!");                    
+                if ((preCodeCounter >= downThreshold) && (preCodeCounter <= upThreshold)){
+                    Serial.println("Пошла запись мелодии!");     
+                    ResetArray(durations);               
                 }
                 else{
-                    Serial.println("Пошло слушание мелодии.");  
+                    ResetArray(notes);
+                    Serial.print("Пошло слушание мелодии. Записано первым значение ");  
                     listenMelody = true;
+                    Serial.println(preCodeCounter);
                     notes[0] = preCodeCounter;
+                    currentDuration = 1;
                     counter = 0;
                 }
                 Serial.println();           
@@ -150,6 +149,12 @@ void loop() {
 
     prevClick = clicking;
     delay(delayInMs);  
+}
+
+void ResetArray(byte arr[durationsQuantity]){
+    for (int i = 0; i < durationsQuantity; i++){
+        arr[i] = 0;
+    }
 }
 
 void PrintArray(byte arr[durationsQuantity]){
