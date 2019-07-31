@@ -19,11 +19,12 @@ byte currentDuration = 0;           // индекс текущей длител�
 bool clicking = false;    // есть ли нажатие на данной итерации
 bool prevClick = false;   // было ли нажатие на предыдущей итерации
 bool preCode = false;     // старт вычисления первого нажатия
-bool writeMelody = false; // идёт ли запись мелодии
+bool writeMelody = false; // идёт ли запись/прослушивание мелодии
 bool listenMelody = false;// идёт ли прослушивание мелодии
 
 int melodyDurationInCount = -1; // счётчик количества итераций записи мелодии
 int preCodeCounter = 1;         // счётчик количества итераций нажатия для включения режима записи
+int melodyLengthInCount;        // количество тактов для записи мелодии
 
 void setup() {  
   Serial.begin(9600);
@@ -33,6 +34,7 @@ void setup() {
                      
   downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
   upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
+  melodyLengthInCount = melodyDurationInMs / delayInMs;
   PrintArray(durations);
 }
 
@@ -43,11 +45,11 @@ void loop() {
     if (clicking){                            // если есть нажатие, то обрабатываем его
         tone(piezoPin, frequencyGz); 
 
-        if (writeMelody){            
+        if (writeMelody){                                                   // если идёт запись мелодии или прослушивание 
             Serial.println(counter);
             counter++;
-            if ((counter != 0) && !prevClick){
-                if (listenMelody)
+            if ((counter != 0) && !prevClick){                              // если идёт счётчик и первый такт нажатия кнопки,
+              if (listenMelody)                                             // то записываем паузу в массив нужный
                     notes[currentDuration] = counter;
                 else
                     durations[currentDuration] = counter;
@@ -57,8 +59,8 @@ void loop() {
                 counter = 0;
             }
             melodyDurationInCount++;
-            if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
-                if (listenMelody){
+            if (melodyDurationInCount >= melodyLengthInCount){    // если количество тактов мелодии превысило необходимое количество тактов,
+              if (listenMelody){                                  // то печатаем получившийся массив и повторяем мелодию
                     Serial.println("Прослушивание окончено.");
                     PrintArray(notes);
                     ReplayMelody(notes, delayInMs);
@@ -75,7 +77,7 @@ void loop() {
             }                            
         }
         else{
-            if (!preCode)                          
+            if (!preCode)                           // начинаем обсчитывать первое нажатие, если его не было 
                 preCode = true;      
             else{                                   // начинается обработка длинного первого нажатия
                 if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
@@ -88,11 +90,11 @@ void loop() {
     }  
     else{
         noTone(piezoPin); 
-        if (writeMelody){              
+        if (writeMelody){                                                     // если идёт запись/прослушивание мелодии
             Serial.println(counter);          
-            if (counter != -1){
+            if (counter != -1){                                               // если не самое начало слушания мелодии
                 counter++;
-                if (prevClick){
+                if (prevClick){                                               // если кнопка только что отжата, то запись в массив
                     if (listenMelody)
                         notes[currentDuration] = counter;
                     else
@@ -105,7 +107,7 @@ void loop() {
             }               
             
             melodyDurationInCount++;
-            if (melodyDurationInMs <= melodyDurationInCount * delayInMs){
+            if (melodyDurationInCount >= melodyLengthInCount){        // если конец мелодии, то конец
                 if (listenMelody){
                     Serial.println("Прослушивание окончено.");
                     PrintArray(notes);
