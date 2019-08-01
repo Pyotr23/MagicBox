@@ -47,15 +47,15 @@ void loop() {
         tone(piezoPin, frequencyGz); 
 
         if (writeMelody){                                                   // если идёт запись мелодии или прослушивание 
-            Serial.println(counter);
+            //Serial.println(counter);
             counter++;
             if ((counter != 0) && !prevClick){                              // если идёт счётчик и первый такт нажатия кнопки,
               if (listenMelody)                                             // то записываем паузу в массив нужный
                     notes[currentDuration] = counter;
                 else
                     durations[currentDuration] = counter;
-                Serial.print("В массив записана пауза длительностью ");
-                Serial.println(counter);
+                //Serial.print("В массив записана пауза длительностью ");
+                //Serial.println(counter);
                 currentDuration++;
                 counter = 0;
             }
@@ -64,7 +64,8 @@ void loop() {
               if (listenMelody){                                  // то печатаем получившийся массив и повторяем мелодию
                     Serial.println("Прослушивание окончено.");
                     PrintArray(notes);
-                    ReplayMelody(notes, delayInMs);
+                    ComparisonArrays(durations, notes);
+                    // ReplayMelody(notes, delayInMs);
                 }
                 else {
                     Serial.println("Запись мелодии окончена.");
@@ -92,7 +93,7 @@ void loop() {
     else{
         noTone(piezoPin); 
         if (writeMelody){                                                     // если идёт запись/прослушивание мелодии
-            Serial.println(counter);          
+            //Serial.println(counter);          
             if (counter != -1){                                               // если не самое начало слушания мелодии
                 counter++;
                 if (prevClick){                                               // если кнопка только что отжата, то запись в массив
@@ -100,8 +101,8 @@ void loop() {
                         notes[currentDuration] = counter;
                     else
                         durations[currentDuration] = counter;
-                    Serial.print("В массив записано нажатие длительностью ");
-                    Serial.println(counter);
+                    //Serial.print("В массив записано нажатие длительностью ");
+                    //Serial.println(counter);
                     currentDuration++;
                     counter = 0;
                 }            
@@ -112,7 +113,8 @@ void loop() {
                 if (listenMelody){
                     Serial.println("Прослушивание окончено.");
                     PrintArray(notes);
-                    ReplayMelody(notes, delayInMs);
+                    ComparisonArrays(durations, notes);
+                    // ReplayMelody(notes, delayInMs);
                 }
                 else {
                     Serial.println("Запись мелодии окончена.");
@@ -127,7 +129,7 @@ void loop() {
         }
         else{
             if (preCode){                           // если первое нажатие закончено, то обсчитываем его                
-                Serial.println(preCodeCounter * delayInMs);
+                // Serial.println(preCodeCounter * delayInMs);
                 writeMelody = true;
                 melodyDurationInCount = 0;
                 if ((preCodeCounter >= downThreshold) && (preCodeCounter <= upThreshold)){
@@ -155,19 +157,31 @@ void loop() {
 }
 
 bool ComparisonArrays(byte first[], byte second[]){
+    Serial.println("Началось сравнение массивов");
     bool result = true;
     byte i = 0;
     int tolerance;
     int delta;
     while ((first[i] != 0) && (second[i] != 0)){
+        Serial.print("i = ");
+        Serial.println(i);
+        Serial.print("first[i] = ");
+        Serial.println(first[i]);
+        Serial.print("second[i] = ");
+        Serial.println(second[i]);
         tolerance = first[i] * musicTolerancePercent / 100 + 1;
+        Serial.print("tolerance = ");
+        Serial.println(tolerance);
         delta = first[i] - second[i];
         if (abs(delta) > tolerance){
+            Serial.println("Превышен допустимый порог");
             result = false;
             return;  
         }
         i++;                
     }  
+    Serial.print("Результат ");
+    Serial.println(result);
     return result;
 }
 
