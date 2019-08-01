@@ -7,6 +7,7 @@ const unsigned int preCodeTime = 3000;          // длительность на
 const unsigned int preCodeTolerancePercent = 20;// точность длительности нажатия кнопки для включения режима записи
 const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
 const byte durationsQuantity = 50;              // наибольшее число пауз и нажатий в мелодии
+const byte musicTolerancePercent = 50;          // погрешность воспроизведения интервалов мелодии, в %
 
 // int firstDuration;                  // длительность нажатия для включения режима записи в мс
 int downThreshold;                  // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
@@ -151,6 +152,23 @@ void loop() {
 
     prevClick = clicking;
     delay(delayInMs);  
+}
+
+bool ComparisonArrays(byte first[], byte second[]){
+    bool result = true;
+    byte i = 0;
+    int tolerance;
+    int delta;
+    while ((first[i] != 0) && (second[i] != 0)){
+        tolerance = first[i] * musicTolerancePercent / 100 + 1;
+        delta = first[i] - second[i];
+        if (abs(delta) > tolerance){
+            result = false;
+            return;  
+        }
+        i++;                
+    }  
+    return result;
 }
 
 void ResetArray(byte arr[durationsQuantity]){
