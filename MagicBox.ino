@@ -35,8 +35,7 @@ void setup() {
                      
   downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
   upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
-  melodyLengthInCount = melodyDurationInMs / delayInMs;
-  PrintArray(durations);
+  melodyLengthInCount = melodyDurationInMs / delayInMs;  
 }
 
 void loop() {     
@@ -62,14 +61,12 @@ void loop() {
             melodyDurationInCount++;
             if (melodyDurationInCount >= melodyLengthInCount){    // если количество тактов мелодии превысило необходимое количество тактов,
               if (listenMelody){                                  // то печатаем получившийся массив и повторяем мелодию
-                    Serial.println("Прослушивание окончено.");
-                    PrintArray(notes);
+                    Serial.println("Прослушивание окончено.");                    
                     ComparisonArrays(durations, notes);
                     // ReplayMelody(notes, delayInMs);
                 }
                 else {
-                    Serial.println("Запись мелодии окончена.");
-                    PrintArray(durations);
+                    Serial.println("Запись мелодии окончена.");                    
                     ReplayMelody(durations, delayInMs);
                 }                  
                 currentDuration = 0;
@@ -111,14 +108,12 @@ void loop() {
             melodyDurationInCount++;
             if (melodyDurationInCount >= melodyLengthInCount){        // если конец мелодии, то конец
                 if (listenMelody){
-                    Serial.println("Прослушивание окончено.");
-                    PrintArray(notes);
+                    Serial.println("Прослушивание окончено.");                    
                     ComparisonArrays(durations, notes);
-                    // ReplayMelody(notes, delayInMs);
+                    ReplayMelody(notes, delayInMs);
                 }
                 else {
-                    Serial.println("Запись мелодии окончена.");
-                    PrintArray(durations);
+                    Serial.println("Запись мелодии окончена.");                    
                     ReplayMelody(durations, delayInMs);
                 }                      
                 currentDuration = 0;
@@ -138,14 +133,12 @@ void loop() {
                 }
                 else{
                     ResetArray(notes);
-                    Serial.print("Пошло слушание мелодии. Записано первым значение ");  
-                    listenMelody = true;
-                    Serial.println(preCodeCounter);
+                    Serial.println("Пошло слушание мелодии.");  
+                    listenMelody = true;                    
                     notes[0] = preCodeCounter;
                     currentDuration = 1;
                     counter = 0;
-                }
-                Serial.println();           
+                }                          
             }      
             preCodeCounter = 0;
             preCode = false;            
@@ -156,32 +149,35 @@ void loop() {
     delay(delayInMs);  
 }
 
+
+
 bool ComparisonArrays(byte first[], byte second[]){
-    Serial.println("Началось сравнение массивов");
+    Serial.print("Началось сравнение массивов. ");
+    Serial.print("Допустимое отклонение каждой длительности - ");
+    Serial.print(musicTolerancePercent);
+    Serial.println("%.");
+    PrintArray(durations);
+    PrintArray(notes);
     bool result = true;
     byte i = 0;
     int tolerance;
     int delta;
-    while ((first[i] != 0) && (second[i] != 0)){
-        Serial.print("i = ");
-        Serial.println(i);
-        Serial.print("first[i] = ");
-        Serial.println(first[i]);
-        Serial.print("second[i] = ");
-        Serial.println(second[i]);
-        tolerance = first[i] * musicTolerancePercent / 100 + 1;
-        Serial.print("tolerance = ");
-        Serial.println(tolerance);
+    int ostatok;
+    while (!((first[i] == 0) || (second[i] == 0))){   
+        ostatok = first[i] % 2;
+        tolerance = first[i] * musicTolerancePercent / 100 + ostatok;          
         delta = first[i] - second[i];
+        Serial.print(delta); 
+        Serial.print(" ");     
         if (abs(delta) > tolerance){
-            Serial.println("Превышен допустимый порог");
+            Serial.println();
+            Serial.println("Превышен допустимый порог.");            
             result = false;
             return;  
         }
         i++;                
     }  
-    Serial.print("Результат ");
-    Serial.println(result);
+    Serial.println("Массивы похожи.");    
     return result;
 }
 
@@ -191,8 +187,7 @@ void ResetArray(byte arr[durationsQuantity]){
     }
 }
 
-void PrintArray(byte arr[durationsQuantity]){
-    Serial.println();
+void PrintArray(byte arr[durationsQuantity]){    
     for (int i = 0; i < 50; i++){
         Serial.print(arr[i]) ;
         Serial.print(" "); 
