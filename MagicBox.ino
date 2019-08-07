@@ -174,9 +174,10 @@ bool ComparisonArrays(byte first[], byte second[]){
         }
         i++;                
     }  
-    if (first[i] != second[i]){
-        return false;
+    if (first[i] != second[i]){     
+        Serial.println();
         Serial.println("Мелодии разной длины."); 
+        return false;
     }
     Serial.println("Массивы похожи.");    
     return true;
