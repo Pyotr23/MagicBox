@@ -9,7 +9,6 @@ const unsigned int melodyDurationInMs = 10000;  // время записи ме�
 const byte durationsQuantity = 50;              // наибольшее число пауз и нажатий в мелодии
 const byte musicTolerancePercent = 50;          // погрешность воспроизведения интервалов мелодии, в %
 
-// int firstDuration;                  // длительность нажатия для включения режима записи в мс
 int downThreshold;                  // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int upThreshold;                    // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int counter = -1;                   // счётчик длительности паузы/нажатия
@@ -157,8 +156,7 @@ bool ComparisonArrays(byte first[], byte second[]){
     Serial.print(musicTolerancePercent);
     Serial.println("%.");
     PrintArray(durations);
-    PrintArray(notes);
-    bool result = true;
+    PrintArray(notes);    
     byte i = 0;
     int tolerance;
     int delta;
@@ -171,14 +169,17 @@ bool ComparisonArrays(byte first[], byte second[]){
         Serial.print(" ");     
         if (abs(delta) > tolerance){
             Serial.println();
-            Serial.println("Превышен допустимый порог.");            
-            result = false;
-            return;  
+            Serial.println("Превышен допустимый порог.");          
+            return false;  
         }
         i++;                
     }  
+    if (first[i] != second[i]){
+        return false;
+        Serial.println("Мелодии разной длины."); 
+    }
     Serial.println("Массивы похожи.");    
-    return result;
+    return true;
 }
 
 void ResetArray(byte arr[durationsQuantity]){
