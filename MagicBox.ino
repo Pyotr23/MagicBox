@@ -8,6 +8,8 @@ const unsigned int preCodeTolerancePercent = 20;// точность длител
 const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
 const byte durationsQuantity = 50;              // наибольшее число пауз и нажатий в мелодии
 const byte musicTolerancePercent = 50;          // погрешность воспроизведения интервалов мелодии, в %
+const unsigned int signalizeDelayInMs = 500;    // длительность тактов при сигнализировании начала записи мелодии
+const byte signalizeMelody[] = {0, 1, 0, 1, 2}; // последовательность тактов сигнала о начале записи, 2 - окончание массива
 
 int downThreshold;                  // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int upThreshold;                    // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
@@ -127,7 +129,8 @@ void loop() {
                 writeMelody = true;
                 melodyDurationInCount = 0;
                 if ((preCodeCounter >= downThreshold) && (preCodeCounter <= upThreshold)){
-                    Serial.println("Пошла запись мелодии!");     
+                    Serial.println("Пошла запись мелодии!");                      
+                    Signalize(piezoPin, frequencyGz, signalizeMelody, signalizeDelayInMs);  
                     ResetArray(durations);               
                 }
                 else{
@@ -148,8 +151,17 @@ void loop() {
     delay(delayInMs);  
 }
 
-void Signalize(byte piezoPin, bool[] melody, int delayInMs){
-      
+void Signalize(byte piezoPin, int freq, byte melody[], int delayInMs){  
+    int i = 0;
+    while(melody[i] != 2){        
+        if (melody[i] == 0)
+            noTone(piezoPin);
+        else
+            tone(piezoPin, freq);
+        i++;
+        delay(delayInMs);
+    };   
+    noTone(piezoPin); 
 }
 
 bool ComparisonArrays(byte first[], byte second[]){
