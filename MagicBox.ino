@@ -148,7 +148,9 @@ void loop() {
     delay(delayInMs);  
 }
 
-
+void Signalize(byte piezoPin, bool[] melody, int delayInMs){
+      
+}
 
 bool ComparisonArrays(byte first[], byte second[]){
     Serial.print("Началось сравнение массивов. ");
