@@ -110,11 +110,10 @@ void loop() {
             servo.write(closeDegree);
             delay(3000);
         } 
-        isOpen = !isOpen; 
-        if (isOpen)
-            Serial.println("Открылась");
-        else
-            Serial.println("Закрылась");              
+        if (!prevClick && isOpen){
+            isOpen = false; 
+            Serial.println("Закрылась"); 
+        }                        
     }  
     else{
         noTone(piezoPin); 
@@ -139,8 +138,10 @@ void loop() {
                 if (listenMelody){
                     Serial.println("Прослушивание окончено.");   
                     isSuccess = ComparisonArrays(durations, notes);             
-                    if (isSuccess)
-                        servo.write(openDegree);
+                    if (isSuccess){
+                          servo.write(openDegree);
+                          isOpen = true;
+                    }                        
                         // Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
                     else
                         Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
