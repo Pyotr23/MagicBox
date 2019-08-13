@@ -14,6 +14,8 @@ const unsigned int signalizeDelayInMs = 500;    // длительность та
 const byte recordingStart[] = {0, 1, 0, 1, 2};  // последовательность тактов сигнала при начале записи, 2 - окончание массива
 const byte success[] = {0, 1, 0, 1, 0, 1, 2};   // последовательность тактов сигнала при верном повторении
 const byte failure[] = {0, 1, 1, 1, 2};         // последовательность тактов сигнала при неверном повторении
+const byte openDegree = 0;                      // градусов сервы при открытии
+const byte closeDegree = 90;                    // градусов сервы при закрывании
 
 Servo servo;
 
@@ -30,6 +32,7 @@ bool preCode = false;     // старт вычисления первого на
 bool writeMelody = false; // идёт ли запись/прослушивание мелодии
 bool listenMelody = false;// идёт ли прослушивание мелодии
 bool isSuccess = false;   // успешна ли попытка открывания
+bool isOpen = true;       // открыта ли шкатулка
 
 int melodyDurationInCount = -1; // счётчик количества итераций записи мелодии
 int preCodeCounter = 1;         // счётчик количества итераций нажатия для включения режима записи
@@ -41,7 +44,7 @@ void setup() {
   pinMode(buttonPin, INPUT);
   pinMode(piezoPin, OUTPUT);
   servo.attach(servoPin);
-  servo.write(0);
+  servo.write(openDegree);
                      
   downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
   upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
@@ -55,51 +58,63 @@ void loop() {
     if (clicking){                            // если есть нажатие, то обрабатываем его
         tone(piezoPin, frequencyGz); 
 
-        if (writeMelody){                                                   // если идёт запись мелодии или прослушивание 
-            //Serial.println(counter);
-            counter++;
-            if ((counter != 0) && !prevClick){                              // если идёт счётчик и первый такт нажатия кнопки,
-              if (listenMelody)                                             // то записываем паузу в массив нужный
-                    notes[currentDuration] = counter;
-                else
-                    durations[currentDuration] = counter;
-                //Serial.print("В массив записана пауза длительностью ");
+        if (!isOpen){
+            if (writeMelody){                                                   // если идёт запись мелодии или прослушивание 
                 //Serial.println(counter);
-                currentDuration++;
-                counter = 0;
-            }
-            melodyDurationInCount++;
-            if (melodyDurationInCount >= melodyLengthInCount){    // если количество тактов мелодии превысило необходимое количество тактов,
-              if (listenMelody){                                  // то печатаем получившийся массив и повторяем мелодию
-                    Serial.println("Прослушивание окончено.");                    
-                    isSuccess = ComparisonArrays(durations, notes);             
-                    if (isSuccess)
-                        Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
+                counter++;
+                if ((counter != 0) && !prevClick){                              // если идёт счётчик и первый такт нажатия кнопки,
+                    if (listenMelody)                                             // то записываем паузу в массив нужный
+                        notes[currentDuration] = counter;
                     else
-                        Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
-                    // ReplayMelody(notes, delayInMs);
+                        durations[currentDuration] = counter;
+                    //Serial.print("В массив записана пауза длительностью ");
+                    //Serial.println(counter);
+                    currentDuration++;
+                    counter = 0;
                 }
-                else {
-                    Serial.println("Запись мелодии окончена.");                    
-                    ReplayMelody(durations, delayInMs);
-                }                  
-                currentDuration = 0;
-                counter = -1;
-                writeMelody = false;
-                listenMelody = false;
-            }                            
+                melodyDurationInCount++;
+                if (melodyDurationInCount >= melodyLengthInCount){    // если количество тактов мелодии превысило необходимое количество тактов,
+                    if (listenMelody){                                  // то печатаем получившийся массив и повторяем мелодию
+                        Serial.println("Прослушивание окончено.");                    
+                        isSuccess = ComparisonArrays(durations, notes);             
+                        if (isSuccess)
+                            Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
+                        else
+                            Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
+                        // ReplayMelody(notes, delayInMs);
+                    }
+                    else {
+                        Serial.println("Запись мелодии окончена.");                    
+                        ReplayMelody(durations, delayInMs);
+                    }                  
+                    currentDuration = 0;
+                    counter = -1;
+                    writeMelody = false;
+                    listenMelody = false;
+                }                            
+            }
+            else{
+                if (!preCode)                           // начинаем обсчитывать первое нажатие, если его не было 
+                    preCode = true;      
+                else{                                   // начинается обработка длинного первого нажатия
+                    if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
+                        preCodeCounter++;
+                        if ((preCodeCounter * delayInMs) % 1000 == 0)
+                            Serial.println("Секундa"); 
+                    }
+                }                
+            }
         }
         else{
-            if (!preCode)                           // начинаем обсчитывать первое нажатие, если его не было 
-                preCode = true;      
-            else{                                   // начинается обработка длинного первого нажатия
-                if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
-                    preCodeCounter++;
-                    if ((preCodeCounter * delayInMs) % 1000 == 0)
-                        Serial.println("Секундa"); 
-                }
-            }                
-        }        
+            noTone(piezoPin);
+            servo.write(closeDegree);
+            delay(3000);
+        } 
+        isOpen = !isOpen; 
+        if (isOpen)
+            Serial.println("Открылась");
+        else
+            Serial.println("Закрылась");              
     }  
     else{
         noTone(piezoPin); 
@@ -125,7 +140,7 @@ void loop() {
                     Serial.println("Прослушивание окончено.");   
                     isSuccess = ComparisonArrays(durations, notes);             
                     if (isSuccess)
-                        servo.write(90);
+                        servo.write(openDegree);
                         // Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
                     else
                         Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
