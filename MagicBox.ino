@@ -1,6 +1,8 @@
+#include <Servo.h>
 
 const byte piezoPin = 3;                        // пин пищалки
 const byte buttonPin = 12;                      // пин кнопки
+const byte servoPin = 11;                       // пин сервы
 const byte delayInMs = 50;                      // задержка между итерациями основного цикла
 const unsigned int frequencyGz = 15000;         // частота звучания пищалки
 const unsigned int preCodeTime = 3000;          // длительность нажатия кнопки в мс для включения режима записи мелодии
@@ -12,6 +14,8 @@ const unsigned int signalizeDelayInMs = 500;    // длительность та
 const byte recordingStart[] = {0, 1, 0, 1, 2};  // последовательность тактов сигнала при начале записи, 2 - окончание массива
 const byte success[] = {0, 1, 0, 1, 0, 1, 2};   // последовательность тактов сигнала при верном повторении
 const byte failure[] = {0, 1, 1, 1, 2};         // последовательность тактов сигнала при неверном повторении
+
+Servo servo;
 
 int downThreshold;                  // верхняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
 int upThreshold;                    // нижняя граница допустимой длительности нажатия кнопки для включения режима записи в мс
@@ -36,6 +40,8 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(buttonPin, INPUT);
   pinMode(piezoPin, OUTPUT);
+  servo.attach(servoPin);
+  servo.write(0);
                      
   downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
   upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
@@ -119,7 +125,8 @@ void loop() {
                     Serial.println("Прослушивание окончено.");   
                     isSuccess = ComparisonArrays(durations, notes);             
                     if (isSuccess)
-                        Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
+                        servo.write(90);
+                        // Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
                     else
                         Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
                     ReplayMelody(notes, delayInMs);
