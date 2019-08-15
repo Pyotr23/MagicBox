@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include <EEPROM.h>
 
 const byte piezoPin = 3;                        // пин пищалки
 const byte buttonPin = 12;                      // пин кнопки
@@ -39,16 +40,22 @@ int preCodeCounter = 1;         // счётчик количества итер�
 int melodyLengthInCount;        // количество тактов для записи мелодии
 
 void setup() {  
-  Serial.begin(9600);
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(buttonPin, INPUT);
-  pinMode(piezoPin, OUTPUT);
-  servo.attach(servoPin);
-  servo.write(openDegree);
-                     
-  downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
-  upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
-  melodyLengthInCount = melodyDurationInMs / delayInMs;  
+    Serial.begin(9600);
+    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(buttonPin, INPUT);
+    pinMode(piezoPin, OUTPUT);
+    servo.attach(servoPin);
+    servo.write(openDegree);
+                       
+    downThreshold = (preCodeTime - preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
+    upThreshold = (preCodeTime + preCodeTime / 100 * preCodeTolerancePercent) / delayInMs;
+    melodyLengthInCount = melodyDurationInMs / delayInMs;  
+  
+    for(int i = 0; i <= 255; i++){        
+        if (EEPROM.read(i) == 0)
+            break;
+        durations[i] = EEPROM.read(i);
+    }      
 }
 
 void loop() {     
@@ -148,7 +155,12 @@ void loop() {
                     ReplayMelody(notes, delayInMs);
                 }
                 else {
-                    Serial.println("Запись мелодии окончена.");                    
+                    Serial.println("Запись мелодии окончена.");  
+                    for(int i = 0; i <= 255; i++){
+                        EEPROM.write(i, durations[i]);
+                        if (durations[i] == 0)
+                            break;                        
+                    }                  
                     ReplayMelody(durations, delayInMs);
                 }                      
                 currentDuration = 0;
