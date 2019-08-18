@@ -242,7 +242,7 @@ bool ComparisonArrays(byte first[], byte second[]){
         }        
         return false;
     }
-    if (enableComments){
+    if (enableComments)
         Serial.println("Массивы похожи.");    
     return true;
 }
@@ -254,8 +254,8 @@ void ResetArray(byte arr[durationsQuantity]){
 }
 
 void PrintArray(byte arr[durationsQuantity]){    
-    if (enableComments)
-        break;
+    if (!enableComments)
+        return;
     for (int i = 0; i < 50; i++){
         Serial.print(arr[i]) ;
         Serial.print(" "); 
