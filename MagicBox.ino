@@ -12,11 +12,12 @@ const unsigned int melodyDurationInMs = 10000;  // время записи ме�
 const byte durationsQuantity = 50;              // наибольшее число пауз и нажатий в мелодии
 const byte musicTolerancePercent = 50;          // погрешность воспроизведения интервалов мелодии, в %
 const unsigned int signalizeDelayInMs = 500;    // длительность тактов при сигнализировании начала записи мелодии
-const byte recordingStart[] = {0, 1, 0, 1, 2};  // последовательность тактов сигнала при начале записи, 2 - окончание массива
-const byte success[] = {0, 1, 0, 1, 0, 1, 2};   // последовательность тактов сигнала при верном повторении
+const byte recordingStart[] = {0, 1, 0, 1, 0 , 1, 2};  // последовательность тактов сигнала при начале записи, 2 - окончание массива
+// const byte success[] = {0, 1, 0, 1, 0, 1, 2};   // последовательность тактов сигнала при верном повторении
 const byte failure[] = {0, 1, 1, 1, 2};         // последовательность тактов сигнала при неверном повторении
 const byte openDegree = 0;                      // градусов сервы при открытии
 const byte closeDegree = 90;                    // градусов сервы при закрывании
+const bool enableComments = true;               // включение комментариев для отладки
 
 Servo servo;
 
@@ -40,7 +41,8 @@ int preCodeCounter = 1;         // счётчик количества итер�
 int melodyLengthInCount;        // количество тактов для записи мелодии
 
 void setup() {  
-    Serial.begin(9600);
+    if (enableComments)
+        Serial.begin(9600);
     pinMode(LED_BUILTIN, OUTPUT);
     pinMode(buttonPin, INPUT);
     pinMode(piezoPin, OUTPUT);
@@ -66,32 +68,26 @@ void loop() {
         tone(piezoPin, frequencyGz); 
 
         if (!isOpen){
-            if (writeMelody){                                                   // если идёт запись мелодии или прослушивание 
-                //Serial.println(counter);
+            if (writeMelody){                                                   // если идёт запись мелодии или прослушивание                 
                 counter++;
                 if ((counter != 0) && !prevClick){                              // если идёт счётчик и первый такт нажатия кнопки,
                     if (listenMelody)                                             // то записываем паузу в массив нужный
                         notes[currentDuration] = counter;
                     else
-                        durations[currentDuration] = counter;
-                    //Serial.print("В массив записана пауза длительностью ");
-                    //Serial.println(counter);
+                        durations[currentDuration] = counter;                    
                     currentDuration++;
                     counter = 0;
                 }
                 melodyDurationInCount++;
                 if (melodyDurationInCount >= melodyLengthInCount){    // если количество тактов мелодии превысило необходимое количество тактов,
                     if (listenMelody){                                  // то печатаем получившийся массив и повторяем мелодию
-                        Serial.println("Прослушивание окончено.");                    
+                        WriteComment(enableComments, "Прослушивание окончено.");                    
                         isSuccess = ComparisonArrays(durations, notes);             
-                        if (isSuccess)
-                            Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
-                        else
-                            Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
-                        // ReplayMelody(notes, delayInMs);
+                        if (!isSuccess)                            
+                            Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs);                         
                     }
                     else {
-                        Serial.println("Запись мелодии окончена.");                    
+                        WriteComment(enableComments, "Запись мелодии окончена.");                    
                         ReplayMelody(durations, delayInMs);
                     }                  
                     currentDuration = 0;
@@ -107,7 +103,7 @@ void loop() {
                     if (prevClick){                     // если продолжается нажатие, то идёт подсчёт тактов с нажатием
                         preCodeCounter++;
                         if ((preCodeCounter * delayInMs) % 1000 == 0)
-                            Serial.println("Секундa"); 
+                            WriteComment(enableComments, "Секундa"); 
                     }
                 }                
             }
@@ -119,22 +115,19 @@ void loop() {
         } 
         if (!prevClick && isOpen){
             isOpen = false; 
-            Serial.println("Закрылась"); 
+            WriteComment(enableComments, "Закрылась"); 
         }                        
     }  
     else{
         noTone(piezoPin); 
-        if (writeMelody){                                                     // если идёт запись/прослушивание мелодии
-            //Serial.println(counter);          
+        if (writeMelody){                                                     // если идёт запись/прослушивание мелодии                   
             if (counter != -1){                                               // если не самое начало слушания мелодии
                 counter++;
                 if (prevClick){                                               // если кнопка только что отжата, то запись в массив
                     if (listenMelody)
                         notes[currentDuration] = counter;
                     else
-                        durations[currentDuration] = counter;
-                    //Serial.print("В массив записано нажатие длительностью ");
-                    //Serial.println(counter);
+                        durations[currentDuration] = counter;                    
                     currentDuration++;
                     counter = 0;
                 }            
@@ -143,19 +136,17 @@ void loop() {
             melodyDurationInCount++;
             if (melodyDurationInCount >= melodyLengthInCount){        // если конец мелодии, то конец
                 if (listenMelody){
-                    Serial.println("Прослушивание окончено.");   
+                    WriteComment(enableComments, "Прослушивание окончено.");   
                     isSuccess = ComparisonArrays(durations, notes);             
                     if (isSuccess){
                           servo.write(openDegree);
                           isOpen = true;
-                    }                        
-                        // Signalize(piezoPin, frequencyGz, success, signalizeDelayInMs); 
+                    }                           
                     else
-                        Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs); 
-                    ReplayMelody(notes, delayInMs);
+                        Signalize(piezoPin, frequencyGz, failure, signalizeDelayInMs);                     
                 }
                 else {
-                    Serial.println("Запись мелодии окончена.");  
+                    WriteComment(enableComments, "Запись мелодии окончена.");  
                     for(int i = 0; i <= 255; i++){
                         EEPROM.write(i, durations[i]);
                         if (durations[i] == 0)
@@ -170,18 +161,17 @@ void loop() {
             }
         }
         else{
-            if (preCode){                           // если первое нажатие закончено, то обсчитываем его                
-                // Serial.println(preCodeCounter * delayInMs);
+            if (preCode){                           // если первое нажатие закончено, то обсчитываем его                  
                 writeMelody = true;
                 melodyDurationInCount = 0;
                 if ((preCodeCounter >= downThreshold) && (preCodeCounter <= upThreshold)){
-                    Serial.println("Пошла запись мелодии!");                      
+                    WriteComment(enableComments, "Пошла запись мелодии!");                      
                     Signalize(piezoPin, frequencyGz, recordingStart, signalizeDelayInMs);  
                     ResetArray(durations);               
                 }
                 else{
                     ResetArray(notes);
-                    Serial.println("Пошло слушание мелодии.");  
+                    WriteComment(enableComments, "Пошло слушание мелодии.");  
                     listenMelody = true;                    
                     notes[0] = preCodeCounter;
                     currentDuration = 1;
@@ -195,6 +185,11 @@ void loop() {
 
     prevClick = clicking;
     delay(delayInMs);  
+}
+
+void WriteComment(bool enable, String comments){
+    if (enable)
+        Serial.println(comments);
 }
 
 void Signalize(byte piezoPin, int freq, byte melody[], int delayInMs){  
@@ -211,10 +206,12 @@ void Signalize(byte piezoPin, int freq, byte melody[], int delayInMs){
 }
 
 bool ComparisonArrays(byte first[], byte second[]){
-    Serial.print("Началось сравнение массивов. ");
-    Serial.print("Допустимое отклонение каждой длительности - ");
-    Serial.print(musicTolerancePercent);
-    Serial.println("%.");
+    if (enableComments){
+        Serial.print("Началось сравнение массивов. ");
+        Serial.print("Допустимое отклонение каждой длительности - ");
+        Serial.print(musicTolerancePercent);
+        Serial.println("%.");
+    }    
     PrintArray(durations);
     PrintArray(notes);    
     byte i = 0;
@@ -225,21 +222,28 @@ bool ComparisonArrays(byte first[], byte second[]){
         ostatok = first[i] % 2;
         tolerance = first[i] * musicTolerancePercent / 100 + ostatok;          
         delta = first[i] - second[i];
-        Serial.print(delta); 
-        Serial.print(" ");     
+        if (enableComments){
+            Serial.print(delta); 
+            Serial.print(" ");     
+        }        
         if (abs(delta) > tolerance){
-            Serial.println();
-            Serial.println("Превышен допустимый порог.");          
+            if (enableComments){
+                Serial.println();
+                Serial.println("Превышен допустимый порог.");   
+            }                   
             return false;  
         }
         i++;                
     }  
-    if (first[i] != second[i]){     
-        Serial.println();
-        Serial.println("Мелодии разной длины."); 
+    if (first[i] != second[i]){   
+        if (enableComments){
+            Serial.println();
+            Serial.println("Мелодии разной длины."); 
+        }        
         return false;
     }
-    Serial.println("Массивы похожи.");    
+    if (enableComments){
+        Serial.println("Массивы похожи.");    
     return true;
 }
 
@@ -250,6 +254,8 @@ void ResetArray(byte arr[durationsQuantity]){
 }
 
 void PrintArray(byte arr[durationsQuantity]){    
+    if (enableComments)
+        break;
     for (int i = 0; i < 50; i++){
         Serial.print(arr[i]) ;
         Serial.print(" "); 
