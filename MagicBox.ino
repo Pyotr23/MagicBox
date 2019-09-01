@@ -5,7 +5,7 @@ const byte piezoPin = 3;                        // пин пищалки
 const byte buttonPin = 12;                      // пин кнопки
 const byte servoPin = 11;                       // пин сервы
 const byte delayInMs = 50;                      // задержка между итерациями основного цикла
-const unsigned int frequencyGz = 10000;         // частота звучания пищалки
+const unsigned int frequencyGz = 5000;         // частота звучания пищалки
 const unsigned int preCodeTime = 3000;          // длительность нажатия кнопки в мс для включения режима записи мелодии
 const unsigned int preCodeTolerancePercent = 20;// точность длительности нажатия кнопки для включения режима записи
 const unsigned int melodyDurationInMs = 10000;  // время записи мелодии
@@ -16,8 +16,9 @@ const byte recordingStart[] = {0, 1, 0, 1, 0 , 1, 2};  // последовате
 // const byte success[] = {0, 1, 0, 1, 0, 1, 2};   // последовательность тактов сигнала при верном повторении
 const byte failure[] = {0, 1, 1, 1, 2};         // последовательность тактов сигнала при неверном повторении
 const byte openDegree = 0;                      // градусов сервы при открытии
-const byte closeDegree = 145;                    // градусов сервы при закрывании
+const byte closeDegree = 125;                    // градусов сервы при закрывании
 const bool enableComments = false;               // включение комментариев для отладки
+const int delayForClosingMs = 500;                // задержка для закрытия крышки, в мс
 
 Servo servo;
 
@@ -111,7 +112,7 @@ void loop() {
         else{
             noTone(piezoPin);
             servo.write(closeDegree);
-            delay(500);
+            delay(delayForClosingMs);
         } 
         if (!prevClick && isOpen){
             isOpen = false; 
